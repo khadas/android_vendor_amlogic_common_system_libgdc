@@ -10,6 +10,10 @@
 #ifndef __GDC_API_H__
 #define __GDC_API_H__
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <log/log.h>
 
@@ -179,6 +183,14 @@ enum {
 	FW_TYPE_MAX
 };
 
+struct gdc_param {
+	uint32_t i_width;
+	uint32_t i_height;
+	uint32_t o_width;
+	uint32_t o_height;
+	uint32_t format;
+};
+
 struct fw_equisolid_s {
 	/* float */
 	char strengthX[8];
@@ -324,6 +336,12 @@ int gdc_destroy_ctx(struct gdc_usr_ctx_s *ctx);
  *   @return 0 - success
  *           -1 - no interrupt from GDC.
  */
+
+int check_plane_number(int plane_number, int format);
+
+int gdc_init_cfg(struct gdc_usr_ctx_s *ctx, struct gdc_param *tparm,
+			const char *f_name);
+
 int gdc_process(struct gdc_usr_ctx_s *ctx);
 
 int gdc_process_with_builtin_fw(struct gdc_usr_ctx_s *ctx);
@@ -333,4 +351,8 @@ int gdc_alloc_buffer (struct gdc_usr_ctx_s *ctx, uint32_t type,
 
 int gdc_sync_for_device(struct gdc_usr_ctx_s *ctx);
 int gdc_sync_for_cpu(struct gdc_usr_ctx_s *ctx);
+#if defined (__cplusplus)
+}
+#endif
+
 #endif

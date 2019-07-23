@@ -342,6 +342,243 @@ int gdc_alloc_buffer (struct gdc_usr_ctx_s *ctx, uint32_t type,
 	return 0;
 }
 
+int check_plane_number(int plane_number, int format)
+{
+	int ret = -1;
+
+	if (plane_number == 1) {
+		ret = 0;
+	} else if (plane_number == 2) {
+		if (format == NV12)
+		ret = 0;
+	} else if (plane_number == 3) {
+		if (format == YV12 ||
+			(format == YUV444_P)  ||
+			(format == RGB444_P))
+		ret = 0;
+	}
+	return ret;
+}
+
+int get_file_size(const char *f_name)
+{
+	int f_size = -1;
+	FILE *fp = NULL;
+
+	if (f_name == NULL) {
+		E_GDC("Error file name\n");
+		return f_size;
+	}
+
+	fp = fopen(f_name, "rb");
+	if (fp == NULL) {
+		E_GDC("Error open file %s\n", f_name);
+		return f_size;
+	}
+
+	fseek(fp, 0, SEEK_END);
+
+	f_size = ftell(fp);
+
+	fclose(fp);
+
+	D_GDC("%s: size %d\n", f_name, f_size);
+
+	return f_size;
+}
+
+int gdc_set_config_param(struct gdc_usr_ctx_s *ctx,
+				const char *f_name, int len)
+{
+	FILE *fp = NULL;
+	int r_size = -1;
+
+	if (f_name == NULL || ctx == NULL || ctx->c_buff == NULL) {
+		E_GDC("Error input param\n");
+		return r_size;
+	}
+
+	fp = fopen(f_name, "rb");
+	if (fp == NULL) {
+		E_GDC("Error open file %s\n", f_name);
+		return -1;
+	}
+
+	r_size = fread(ctx->c_buff, len, 1, fp);
+	if (r_size <= 0)
+		E_GDC("Failed to read file %s\n", f_name);
+
+	fclose(fp);
+
+	return r_size;
+}
+
+int gdc_init_cfg(struct gdc_usr_ctx_s *ctx, struct gdc_param *tparm,
+				const char *f_name)
+{
+	struct gdc_settings_ex *gdc_gs = NULL;
+	int ret = -1;
+	uint32_t format = 0;
+	uint32_t i_width = 0;
+	uint32_t i_height = 0;
+	uint32_t o_width = 0;
+	uint32_t o_height = 0;
+	uint32_t i_y_stride = 0;
+	uint32_t i_c_stride = 0;
+	uint32_t o_y_stride = 0;
+	uint32_t o_c_stride = 0;
+	uint32_t i_len = 0;
+	uint32_t o_len = 0;
+	uint32_t c_len = 0;
+	int plane_number = 1;
+	gdc_alloc_buffer_t buf;
+
+	if (ctx == NULL || tparm == NULL || f_name == NULL) {
+		E_GDC("Error invalid input param\n");
+		return ret;
+	}
+
+	plane_number = ctx->plane_number;
+	i_width = tparm->i_width;
+	i_height = tparm->i_height;
+	o_width = tparm->o_width;
+	o_height = tparm->o_height;
+
+	format = tparm->format;
+
+	i_y_stride = AXI_WORD_ALIGN(i_width);
+	o_y_stride = AXI_WORD_ALIGN(o_width);
+
+	if (format == NV12 || format == YUV444_P || format == RGB444_P) {
+		i_c_stride = AXI_WORD_ALIGN(i_width);
+		o_c_stride = AXI_WORD_ALIGN(o_width);
+	} else if (format == YV12) {
+		i_c_stride = AXI_WORD_ALIGN(i_width) / 2;
+		o_c_stride = AXI_WORD_ALIGN(o_width) / 2;
+	} else if (format == Y_GREY) {
+		i_c_stride = 0;
+		o_c_stride = 0;
+	} else {
+		E_GDC("Error unknow format\n");
+		return ret;
+	}
+
+	gdc_gs = &ctx->gs_ex;
+
+	gdc_gs->gdc_config.input_width = i_width;
+	gdc_gs->gdc_config.input_height = i_height;
+	gdc_gs->gdc_config.input_y_stride = i_y_stride;
+	gdc_gs->gdc_config.input_c_stride = i_c_stride;
+	gdc_gs->gdc_config.output_width = o_width;
+	gdc_gs->gdc_config.output_height = o_height;
+	gdc_gs->gdc_config.output_y_stride = o_y_stride;
+	gdc_gs->gdc_config.output_c_stride = o_c_stride;
+	gdc_gs->gdc_config.format = format;
+	gdc_gs->magic = sizeof(*gdc_gs);
+
+	buf.format = format;
+
+	ret = gdc_create_ctx(ctx);
+	if (ret < 0)
+		return -1;
+
+	if (!ctx->custom_fw) {
+		c_len = get_file_size(f_name);
+		if (c_len <= 0) {
+			gdc_destroy_ctx(ctx);
+			E_GDC("Error gdc config file size\n");
+			return ret;
+		}
+
+		buf.plane_number = 1;
+		buf.len[0] = c_len;
+		ret = gdc_alloc_buffer(ctx, CONFIG_BUFF_TYPE, &buf, false);
+		if (ret < 0) {
+			gdc_destroy_ctx(ctx);
+			E_GDC("Error alloc gdc cfg buff\n");
+			return ret;
+		}
+
+		ret = gdc_set_config_param(ctx, f_name, c_len);
+		if (ret < 0) {
+			gdc_destroy_ctx(ctx);
+			E_GDC("Error cfg gdc param buff\n");
+			return ret;
+		}
+
+		gdc_gs->gdc_config.config_size = c_len / 4;
+	}
+	buf.plane_number = plane_number;
+	if ((plane_number == 1) || (format == Y_GREY)) {
+		if (format == RGB444_P || format == YUV444_P)
+			i_len = i_y_stride * i_height * 3;
+		else if (format == NV12 || format == YV12)
+			i_len = i_y_stride * i_height * 3 / 2;
+		else if (format == Y_GREY)
+			i_len = i_y_stride * i_height;
+		buf.plane_number = 1;
+		buf.len[0] = i_len;
+	} else if ((plane_number == 2) && (format == NV12)) {
+		buf.len[0] = i_y_stride * i_height;
+		buf.len[1] = i_y_stride * i_height / 2;
+	} else if ((plane_number == 3) &&
+		(format == YV12 ||
+		(format == YUV444_P) ||
+		(format == RGB444_P))) {
+		buf.len[0] = i_y_stride * i_height;
+		if (format == YV12) {
+			buf.len[1] = i_y_stride * i_height / 4;
+			buf.len[2] = i_y_stride * i_height / 4;
+		} else if ((format == YUV444_P) ||
+			(format == RGB444_P)) {
+			buf.len[1] = i_y_stride * i_height;
+			buf.len[2] = i_y_stride * i_height;
+		}
+	}
+	ret = gdc_alloc_buffer(ctx, INPUT_BUFF_TYPE, &buf, false);
+	if (ret < 0) {
+		gdc_destroy_ctx(ctx);
+		E_GDC("Error alloc gdc input buff\n");
+		return ret;
+	}
+
+	buf.plane_number = plane_number;
+	if ((plane_number == 1) || (format == Y_GREY)) {
+		if (format == RGB444_P || format == YUV444_P)
+			o_len = o_y_stride * o_height * 3;
+		else if (format == NV12 || format == YV12)
+			o_len = o_y_stride * o_height * 3 / 2;
+		else if (format == Y_GREY)
+			o_len = o_y_stride * o_height;
+		buf.plane_number = 1;
+		buf.len[0] = o_len;
+	} else if ((plane_number == 2) && (format == NV12)) {
+		buf.len[0] = o_y_stride * o_height;
+		buf.len[1] = o_y_stride * o_height / 2;
+	} else if ((plane_number == 3) &&
+		(format == YV12 ||
+		(format == YUV444_P) ||
+		(format == RGB444_P))) {
+		buf.len[0] = o_y_stride * o_height;
+		if (format == YV12) {
+			buf.len[1] = o_y_stride * o_height / 4;
+			buf.len[2] = o_y_stride * o_height / 4;
+		} else if ((format == YUV444_P) ||
+			(format == RGB444_P)) {
+			buf.len[1] = o_y_stride * o_height;
+			buf.len[2] = o_y_stride * o_height;
+		}
+	}
+
+	ret = gdc_alloc_buffer(ctx, OUTPUT_BUFF_TYPE, &buf, true);
+	if (ret < 0) {
+		gdc_destroy_ctx(ctx);
+		E_GDC("Error alloc gdc input buff\n");
+		return ret;
+	}
+	return ret;
+}
+
 int gdc_process(struct gdc_usr_ctx_s *ctx)
 {
 	int ret = -1;
@@ -411,7 +648,7 @@ int gdc_sync_for_device(struct gdc_usr_ctx_s *ctx)
 	}
 	if (!ctx->custom_fw &&
 		gs_ex->config_buffer.mem_alloc_type == AML_GDC_MEM_DMABUF) {
-		shared_fd[0] = gs_ex->input_buffer.shared_fd;
+		shared_fd[0] = gs_ex->config_buffer.shared_fd;
 		ret = ioctl(ctx->gdc_client, GDC_SYNC_DEVICE,
 				&shared_fd[0]);
 		if (ret < 0) {

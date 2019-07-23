@@ -134,19 +134,6 @@ int ion_mem_invalid_cache(int shared_fd)
 }
 #endif
 
-int ion_mem_free(IONMEM_AllocParams *params)
-{
-    if (!validate_init()) {
-        return -1;
-    }
-    D_GDC("ion_mem_free,mIonHnd=%x free\n", params->mIonHnd);
-
-    ion_free(ion_mem_fd, params->mIonHnd);
-
-    return 0;
-}
-
-
 int ion_mem_exit(void)
 {
     int result = 0;
