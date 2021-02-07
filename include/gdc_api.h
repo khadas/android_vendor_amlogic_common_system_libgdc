@@ -34,7 +34,6 @@ typedef unsigned long phys_addr_t;
 #endif
 #define E_GDC(fmt, args...) ALOGE("gdc error: " fmt, ## args)
 
-
 enum gdc_memtype_s {
 	AML_GDC_MEM_ION,
 	AML_GDC_MEM_DMABUF,
@@ -55,6 +54,11 @@ enum {
 	YUV444_P,
 	RGB444_P,
 	FMT_MAX
+};
+
+enum {
+	ARM_GDC,
+	AML_GDC
 };
 
 typedef unsigned int uint32_t;
@@ -286,6 +290,7 @@ struct gdc_settings_with_fw {
 
 struct gdc_usr_ctx_s {
 	int gdc_client;
+	int ion_fd;
 	int custom_fw;
 	struct gdc_settings gs;
 	struct gdc_settings_ex gs_ex;
@@ -298,6 +303,7 @@ struct gdc_usr_ctx_s {
 	unsigned long i_len[MAX_PLANE];
 	unsigned long o_len[MAX_PLANE];
 	unsigned long c_len;
+	unsigned int dev_type;
 };
 
 typedef struct gdc_alloc_buffer_s {

@@ -20,6 +20,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+#include <pthread.h>
+#include <sys/time.h>
 #include <gdc_api.h>
 
 int parse_custom_fw(struct gdc_usr_ctx_s *ctx, const char *config_file)
@@ -46,7 +48,7 @@ int parse_custom_fw(struct gdc_usr_ctx_s *ctx, const char *config_file)
 	ctx->gs_with_fw.fw_info.fw_type = EQUISOLID;
 
 	if (ret > 0)
-		D_GDC("equisolid-%d_%d_%d_%d_%d_%d-%d_%d_%d_%d-%d_%d_%s-%s_%s_%d-%s.bin\n",
+		printf("equisolid-%d_%d_%d_%d_%d_%d-%d_%d_%d_%d-%d_%d_%s-%s_%s_%d-%s.bin\n",
 			in->with, in->height,
 			in->fov, in->diameter,
 			in->offsetX, in->offsetY,
@@ -72,7 +74,7 @@ int parse_custom_fw(struct gdc_usr_ctx_s *ctx, const char *config_file)
 		ctx->gs_with_fw.fw_info.fw_type = CYLINDER;
 
 		if (ret > 0)
-			D_GDC("cindif: cylinder-%d_%d_%d_%d_%d_%d-%d_%d_%d_%d-%d_%d_%s-%s_%d-%s.bin\n",
+			printf("cindif: cylinder-%d_%d_%d_%d_%d_%d-%d_%d_%d_%d-%d_%d_%s-%s_%d-%s.bin\n",
 				in->with, in->height,
 				in->fov, in->diameter,
 				in->offsetX, in->offsetY,
@@ -104,7 +106,7 @@ int parse_custom_fw(struct gdc_usr_ctx_s *ctx, const char *config_file)
 		ctx->gs_with_fw.fw_info.fw_type = EQUIDISTANT;
 
 		if (ret > 0)
-			D_GDC("equidistant-%d_%d_%d_%d_%d_%d-%d_%d_%d_%d-%d_%d_%s-%s_%d_%d_%d_%d_%d_%d_%d-%s.bin\n",
+			printf("equidistant-%d_%d_%d_%d_%d_%d-%d_%d_%d_%d-%d_%d_%s-%s_%d_%d_%d_%d_%d_%d_%d-%s.bin\n",
 				in->with, in->height,
 				in->fov, in->diameter,
 				in->offsetX, in->offsetY,
@@ -135,7 +137,7 @@ int parse_custom_fw(struct gdc_usr_ctx_s *ctx, const char *config_file)
 		ctx->gs_with_fw.fw_info.fw_type = CUSTOM;
 
 		if (ret > 0)
-			D_GDC("custom-%d_%d_%d_%d_%d_%d-%d_%d_%d_%d-%d_%d_%s-%s-%s.bin\n",
+			printf("custom-%d_%d_%d_%d_%d_%d-%d_%d_%d_%d-%d_%d_%s-%s-%s.bin\n",
 				in->with, in->height,
 				in->fov, in->diameter,
 				in->offsetX, in->offsetY,
@@ -158,7 +160,7 @@ int parse_custom_fw(struct gdc_usr_ctx_s *ctx, const char *config_file)
 	ctx->gs_with_fw.fw_info.fw_type = AFFINE;
 
 	if (ret > 0)
-		D_GDC("affine-%d_%d_%d_%d_%d_%d-%d_%d_%d_%d-%d_%d_%s-%d-%s.bin\n",
+		printf("affine-%d_%d_%d_%d_%d_%d-%d_%d_%d_%d-%d_%d_%s-%d-%s.bin\n",
 			in->with, in->height,
 			in->fov, in->diameter,
 			in->offsetX, in->offsetY,
@@ -196,7 +198,7 @@ static int gdc_set_input_image(struct gdc_usr_ctx_s *ctx,
 
 	for (i = 0; i < ctx->plane_number; i++) {
 		if (ctx->i_buff[i] == NULL || ctx->i_len[i] == 0) {
-			D_GDC("Error input param, plane_id=%d\n", i);
+			printf("Error input param, plane_id=%d\n", i);
 			return r_size;
 		}
 		r_size = fread(ctx->i_buff[i], ctx->i_len[i], 1, fp);
@@ -229,7 +231,7 @@ static void save_imgae(struct gdc_usr_ctx_s *ctx, const char *file_name)
 			E_GDC("%s:Error input param\n", __func__);
 			break;
 		}
-		D_GDC("gdc: 0x%2x, 0x%2x,0x%2x,0x%2x, 0x%2x,0x%2x,0x%2x,0x%2x\n",
+		printf("gdc: 0x%2x, 0x%2x,0x%2x,0x%2x, 0x%2x,0x%2x,0x%2x,0x%2x\n",
 			ctx->o_buff[i][0],
 			ctx->o_buff[i][1],
 			ctx->o_buff[i][2],
@@ -242,6 +244,33 @@ static void save_imgae(struct gdc_usr_ctx_s *ctx, const char *file_name)
 		fwrite(ctx->o_buff[i], ctx->o_len[i], 1, fp);
 	}
 	fclose(fp);
+}
+
+static inline unsigned long myclock()
+{
+	struct timeval tv;
+
+	gettimeofday (&tv, NULL);
+
+	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
+static void print_usage(void)
+{
+	printf ("Usage: gdc_test [options]\n\n");
+	printf ("Options:\n\n");
+	printf ("  -h                      Print usage information.\n");
+	printf ("  -c <string>             config file name.\n");
+	printf ("  -t <num>                use custom_fw or not.\n");
+	printf ("  -f <num>                format. 1:NV12,2:YV12,3:Y_GREY,4:YUV444_P,5:RGB444_P,\n");
+	printf ("  -i <string>             input file name.\n");
+	printf ("  -o <string>             output file name.\n");
+	printf ("  -p <num>                image plane num.\n");
+	printf ("  -w <width x height>     image width x height.\n");
+	printf ("  -n <num>                num of process time.\n");
+	printf ("  -m <num>                memtype. 0:ION,1:DMABUF.\n");
+	printf ("  -d <num>                dev_type, 0:ARM_GDC 1:AML_GDC.\n");
+	printf ("\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -262,36 +291,42 @@ int main(int argc, char* argv[]) {
 	const char *config_file = "config.bin";
 	struct gdc_param g_param;
 	int is_custom_fw;
+	unsigned long stime;
+	int dev_type = 0;
 
 	while (1) {
 		static struct option opts[] = {
+			{"help", no_argument, 0, 'h'},
 			{"config_file", required_argument, 0, 'c'},
 			{"custom_fw", required_argument, 0, 't'},
 			{"format", required_argument, 0, 'f'},
-			{"height", required_argument, 0, 'h'},
 			{"input_file", required_argument, 0, 'i'},
 			{"output_file", required_argument, 0, 'o'},
 			{"plane_num", required_argument, 0, 'p'},
 			{"stride", required_argument, 0, 's'},
-			{"width", required_argument, 0, 'w'},
+			{"width x height", required_argument, 0, 'w'},
 			{"num_of_iter", required_argument, 0, 'n'},
-			{"memory_type", required_argument, 0, 'm'}
+			{"memory_type", required_argument, 0, 'm'},
+			{"dev type", required_argument, 0, 'd'}
 		};
 		int i = 0;
-		c = getopt_long(argc, argv, "c:t:f:h:i:o:p:s:w:n:m:", opts, &i);
+		c = getopt_long(argc, argv, "hc:t:f:i:o:p:s:w:n:m:d:", opts, &i);
 		if (c == -1)
 			break;
 
 		switch (c) {
+		case 'h':
+			print_usage();
+			return 0;
 		case 'c':
 			is_custom_fw = 0;
 			config_file = optarg;
-			D_GDC("config_file: %s\n", config_file);
+			printf("config_file: %s\n", config_file);
 			break;
 		case 't':
 			is_custom_fw = 1;
 			config_file = optarg;
-			D_GDC("custom_fw: %s\n", config_file);
+			printf("custom_fw: %s\n", config_file);
 			break;
 		case 'f':
 			format = atol(optarg);
@@ -301,7 +336,7 @@ int main(int argc, char* argv[]) {
 			break;
 		case 'o':
 			output_file = optarg;
-			D_GDC("output_file: %s\n", output_file);
+			printf("output_file: %s\n", output_file);
 			break;
 		case 'p':
 			plane_number = atol(optarg);
@@ -310,13 +345,13 @@ int main(int argc, char* argv[]) {
 			sscanf(optarg, "%dx%d-%dx%d",
 				&in_y_stride, &in_c_stride,
 				&out_y_stride, &out_c_stride);
-			D_GDC("parse stride, in: y-%d uv-%d, out:y-%d uv-%d\n",
+			printf("parse stride, in: y-%d uv-%d, out:y-%d uv-%d\n",
 			in_y_stride, in_c_stride, out_y_stride, out_c_stride);
 			break;
 		case 'w':
 			sscanf(optarg, "%dx%d-%dx%d",
 				&in_width, &in_height, &out_width, &out_height);
-			D_GDC("parse wxh, in: %dx%d, out:%dx%d\n",
+			printf("parse wxh, in: %dx%d, out:%dx%d\n",
 				in_width, in_height, out_width, out_height);
 			break;
 		case 'n':
@@ -324,6 +359,9 @@ int main(int argc, char* argv[]) {
 			break;
 		case 'm':
 			mem_type = atol(optarg);
+			break;
+		case 'd':
+			dev_type = atol(optarg);
 			break;
 		}
 	}
@@ -333,27 +371,30 @@ int main(int argc, char* argv[]) {
 		E_GDC("Error plane_number=[%d]\n", plane_number);
 		return -1;
 	}
+
+	g_param.i_width = in_width;
+	g_param.i_height = in_height;
+	g_param.o_width = out_width;
+	g_param.o_height = out_height;
+	g_param.format = format;
+
+	memset(&ctx, 0, sizeof(ctx));
+	ctx.custom_fw = is_custom_fw;
+	ctx.mem_type = mem_type;
+	ctx.plane_number = plane_number;
+	ctx.dev_type = dev_type;
+
+	ret = gdc_init_cfg(&ctx, &g_param, config_file);
+	if (ret < 0) {
+		E_GDC("Error gdc init\n");
+		gdc_destroy_ctx(&ctx);
+		return -1;
+	}
+
+	gdc_set_input_image(&ctx, input_file);
+
+	stime = myclock();
 	for (i=0; i < num; i++) {
-		g_param.i_width = in_width;
-		g_param.i_height = in_height;
-		g_param.o_width = out_width;
-		g_param.o_height = out_height;
-		g_param.format = format;
-
-		memset(&ctx, 0, sizeof(ctx));
-		ctx.custom_fw = is_custom_fw;
-		ctx.mem_type = mem_type;
-		ctx.plane_number = plane_number;
-
-		ret = gdc_init_cfg(&ctx, &g_param, config_file);
-		if (ret < 0) {
-			E_GDC("Error gdc init\n");
-			gdc_destroy_ctx(&ctx);
-			return -1;
-		}
-
-		gdc_set_input_image(&ctx, input_file);
-
 		if (!ctx.custom_fw) {
 			ret = gdc_process(&ctx);
 			if (ret < 0) {
@@ -378,10 +419,12 @@ int main(int argc, char* argv[]) {
 				return ret;
 			}
 		}
-		save_imgae(&ctx, output_file);
-		gdc_destroy_ctx(&ctx);
-		D_GDC("Success save output image, loop=%d\n", i);
 	}
+	printf("time=%ld ms\n", myclock() - stime);
+
+	save_imgae(&ctx, output_file);
+	gdc_destroy_ctx(&ctx);
+	printf("Success save output image, loop=%d\n", i);
 
 	return 0;
 }

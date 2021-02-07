@@ -6,6 +6,7 @@ LOCAL_MODULE := libgdc
 LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := liblog libion
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include \
+	system/core/libion/ \
 	system/core/libion/include/ \
 	system/core/libion/kernel-headers \
 	system/core/liblog/include \

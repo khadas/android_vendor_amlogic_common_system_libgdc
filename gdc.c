@@ -24,13 +24,16 @@
 #include <IONmem.h>
 #include <gdc_api.h>
 
-#define   FILE_NAME_GDC "/dev/gdc"
+#define   FILE_NAME_GDC      "/dev/gdc"
+#define   FILE_NAME_AML_GDC  "/dev/amlgdc"
 
 int gdc_create_ctx(struct gdc_usr_ctx_s *ctx)
 {
 	int ret = -1;
+	char *dev_name = (ctx->dev_type == ARM_GDC) ? FILE_NAME_GDC :
+						      FILE_NAME_AML_GDC;
 
-	ctx->gdc_client = open(FILE_NAME_GDC, O_RDWR | O_SYNC);
+	ctx->gdc_client = open(dev_name, O_RDWR | O_SYNC);
 
 	if (ctx->gdc_client < 0) {
 		E_GDC("gdc open failed error=%d, %s",
@@ -38,8 +41,12 @@ int gdc_create_ctx(struct gdc_usr_ctx_s *ctx)
 		return -1;
 	}
 	ret = ion_mem_init();
-	if (ret < 0)
+	if (ret < 0) {
+		E_GDC("ionmem init failed\n");
 		return -1;
+	}
+
+	ctx->ion_fd = ret;
 
 	return 0;
 }
@@ -114,7 +121,11 @@ int gdc_destroy_ctx(struct gdc_usr_ctx_s *ctx)
 		close(ctx->gdc_client);
 		ctx->gdc_client = -1;
 	}
-	ion_mem_exit();
+
+	if (ctx->ion_fd >= 0) {
+		ion_mem_exit(ctx->ion_fd);
+		ctx->ion_fd = -1;
+	}
 
 	return 0;
 }
@@ -261,7 +272,7 @@ int gdc_alloc_buffer (struct gdc_usr_ctx_s *ctx, uint32_t type,
 			int ret = -1;
 			IONMEM_AllocParams ion_alloc_params;
 
-			ret = ion_mem_alloc(buf->len[i], &ion_alloc_params,
+			ret = ion_mem_alloc(ctx->ion_fd, buf->len[i], &ion_alloc_params,
 						cache_flag);
 			if (ret < 0) {
 				E_GDC("%s,%d,Not enough memory\n",__func__,
@@ -446,16 +457,19 @@ int gdc_init_cfg(struct gdc_usr_ctx_s *ctx, struct gdc_param *tparm,
 
 	format = tparm->format;
 
-	i_y_stride = AXI_WORD_ALIGN(i_width);
-	o_y_stride = AXI_WORD_ALIGN(o_width);
-
 	if (format == NV12 || format == YUV444_P || format == RGB444_P) {
+		i_y_stride = AXI_WORD_ALIGN(i_width);
+		o_y_stride = AXI_WORD_ALIGN(o_width);
 		i_c_stride = AXI_WORD_ALIGN(i_width);
 		o_c_stride = AXI_WORD_ALIGN(o_width);
 	} else if (format == YV12) {
-		i_c_stride = AXI_WORD_ALIGN(i_width) / 2;
-		o_c_stride = AXI_WORD_ALIGN(o_width) / 2;
+		i_c_stride = AXI_WORD_ALIGN(i_width / 2);
+		o_c_stride = AXI_WORD_ALIGN(o_width / 2);
+		i_y_stride = i_c_stride * 2;
+		o_y_stride = o_c_stride * 2;
 	} else if (format == Y_GREY) {
+		i_y_stride = AXI_WORD_ALIGN(i_width);
+		o_y_stride = AXI_WORD_ALIGN(o_width);
 		i_c_stride = 0;
 		o_c_stride = 0;
 	} else {
