@@ -73,9 +73,14 @@ typedef enum _data_mode_ {
     YUV420_PLANAR = 0,
     YUV420_SEMIPLANAR,
     YONLY,
-    YUV420_MODE_MAX
+    DEWARP_COLOR_MODE_MAX
 } data_mode_t;
 
+/* Description  : generate FW data to fw_buffer
+ * Params       : dewarp_params and fw_buffer vaddr
+ * Returen      : success -- total bytes of FW
+ *                   fail -- minus
+ */
 int dewarp_gen_config(struct dewarp_params *dewarp_params, int *fw_buffer);
 
 #if defined (__cplusplus)

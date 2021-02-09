@@ -23,6 +23,7 @@ struct dewarp_params dewarp_params;
 static int process_circle = 1;
 char in_file[256];
 char out_file[256];
+char dump_fw_file[256];
 
 static inline unsigned long myclock()
 {
@@ -35,28 +36,29 @@ static inline unsigned long myclock()
 
 static void print_usage(void)
 {
-	printf ("Usage: ge2d_feature_test [options]\n\n");
+	printf ("Usage: dewarp_test [options]\n\n");
 	printf ("Options:\n\n");
-	printf ("  -help                                                                           .\n");
-	printf ("  -win_num <Num>                                                                  .\n");
-	printf ("  -tile_x_step <Num>                                                              .\n");
-	printf ("  -tile_y_step <Num>                                                              .\n");
-	printf ("  -input_size <WxH>                                                               .\n");
-	printf ("  -input_offset <X_Y>                                                             .\n");
-	printf ("  -fov <Num>                                                                      .\n");
-	printf ("  -color_mode <0:YUV420_PLANAR 1:YUV420_SEMIPLANAR 2:YONLY>                        \n");
-	printf ("  -output_size <WxH>                                                              .\n");
-	printf ("  -proj1 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    .\n");
-	printf ("  -proj2 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    .\n");
-	printf ("  -proj3 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    .\n");
-	printf ("  -proj4 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    .\n");
-	printf ("  -win1 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> .\n");
-	printf ("  -win2 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> .\n");
-	printf ("  -win3 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> .\n");
-	printf ("  -win4 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> .\n");
-	printf ("  -circle <Num>                                                                   .\n");
-	printf ("  -in_file  <ImageName>                                                           .\n");
-	printf ("  -out_file <ImageName>                                                           .\n");
+	printf ("  -help                                                                           \n");
+	printf ("  -win_num <Num>                                                                  \n");
+	printf ("  -tile_x_step <Num>                                                              \n");
+	printf ("  -tile_y_step <Num>                                                              \n");
+	printf ("  -input_size <WxH>                                                               \n");
+	printf ("  -input_offset <X_Y>                                                             \n");
+	printf ("  -fov <Num>                                                                      \n");
+	printf ("  -color_mode <0:YUV420_PLANAR 1:YUV420_SEMIPLANAR 2:YONLY>                       \n");
+	printf ("  -output_size <WxH>                                                              \n");
+	printf ("  -proj1 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
+	printf ("  -proj2 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
+	printf ("  -proj3 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
+	printf ("  -proj4 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
+	printf ("  -win1 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
+	printf ("  -win2 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
+	printf ("  -win3 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
+	printf ("  -win4 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
+	printf ("  -circle <Num>                                                                   \n");
+	printf ("  -in_file  <ImageName>                                                           \n");
+	printf ("  -out_file <ImageName>                                                           \n");
+	printf ("  -dump_fw_file <FirmwareName>                                                    \n");
 	printf ("\n");
 }
 
@@ -164,6 +166,10 @@ static int parse_command_line(int argc, char *argv[])
 				sscanf (argv[i], "%s", out_file) == 1) {
 				param_cnt++;
 				continue;
+			} else if (strcmp (argv[i] + 1, "dump_fw_file") == 0 && ++i < argc &&
+				sscanf (argv[i], "%s", dump_fw_file) == 1) {
+				param_cnt++;
+				continue;
 			}
 		}
 	}
@@ -186,7 +192,7 @@ static int parse_command_line(int argc, char *argv[])
 			proj[i].projection_mode, proj[i].pan, proj[i].tilt,
 			proj[i].rotation, proj[i].zoom, proj[i].strength_hor, proj[i].strength_ver);
 	}
-	printf("  win_param:");
+	printf("   win_param:");
 	for (i = 0; i < dewarp_params.win_num; i++) {
 		if (i != 0)
 			printf("           :");
@@ -234,6 +240,7 @@ int main(int argc, char** argv)
 	int out_shared_fd = -1;
 	int firmware_shared_fd = -1;
 	int fw_len = 300 * 1024;           /* 300KB, just for test */
+	int fw_bytes = 0;
 	int *fw_buffer = NULL;
 
 	ret = parse_command_line(argc, argv);
@@ -342,9 +349,10 @@ int main(int argc, char** argv)
 
 	stime = myclock();
 	for (i = 0; i< process_circle; i++)
-		dewarp_gen_config(&dewarp_params, fw_buffer);
+		ret = dewarp_gen_config(&dewarp_params, fw_buffer);
 
-	printf("fw generation time=%ld ms\n", myclock() - stime);
+	printf("fw generation time=%ld ms, total FW bytes:%d\n", myclock() - stime, ret);
+	fw_bytes = ret;
 
 	stime = myclock();
 	for (i = 0; i< process_circle; i++) {
@@ -358,10 +366,14 @@ int main(int argc, char** argv)
 
 	munmap(fw_buffer, fw_len);
 
-	printf("write out file\n");
-	aml_write_file(out_shared_fd, out_file, o_len);
-	/* printf("write firmware file\n"); */
-	/* aml_write_file(firmware_shared_fd, "firmware_board.bin", fw_len); */
+	if (out_file[0] != 0) {
+		printf("write out file\n");
+		aml_write_file(out_shared_fd, out_file, o_len);
+	}
+	if (dump_fw_file[0] != 0) {
+		printf("write firmware file\n");
+		aml_write_file(firmware_shared_fd, dump_fw_file, fw_bytes);
+	}
 
 release_out_buf:
 	ion_release_mem(out_shared_fd);
