@@ -50,13 +50,27 @@ struct win_param {
     int img_end_y;
 };
 
+struct clb_param {
+    double fx;
+    double fy;
+    double cx;
+    double cy;
+    double k1;
+    double k2;
+    double k3;
+    double p1;
+    double p2;
+};
+
 struct dewarp_params {
     int win_num;
     struct input_param input_param;
     int color_mode;
     struct output_param output_param;
     struct proj_param proj_param[WIN_MAX];
+    struct clb_param clb_param[WIN_MAX];
     struct win_param win_param[WIN_MAX];
+    int prm_mode; /* 0. use proj_param, 1.use clb_param. */
     int tile_x_step;
     int tile_y_step;
 };

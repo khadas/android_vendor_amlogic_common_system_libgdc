@@ -51,10 +51,15 @@ static void print_usage(void)
 	printf ("  -proj2 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
 	printf ("  -proj3 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
 	printf ("  -proj4 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
+	printf ("  -clb1 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2>                                              \n");
+	printf ("  -clb2 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2>                                              \n");
+	printf ("  -clb3 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2>                                              \n");
+	printf ("  -clb4 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2>                                              \n");
 	printf ("  -win1 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
 	printf ("  -win2 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
 	printf ("  -win3 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
 	printf ("  -win4 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
+	printf ("  -prm_mode <0:use proj_param, 1:use clb_param>                                   \n");
 	printf ("  -circle <Num>                                                                   \n");
 	printf ("  -in_file  <ImageName>                                                           \n");
 	printf ("  -out_file <ImageName>                                                           \n");
@@ -69,6 +74,7 @@ static int parse_command_line(int argc, char *argv[])
 	struct output_param *out = &dewarp_params.output_param;
 	struct proj_param *proj  = &dewarp_params.proj_param[0];
 	struct win_param *win    = &dewarp_params.win_param[0];
+	struct clb_param *clb    = &dewarp_params.clb_param[0];
 
 	dewarp_params.tile_x_step = 8; /* default x step */
 	dewarp_params.tile_y_step = 8; /* default y step */
@@ -126,6 +132,26 @@ static int parse_command_line(int argc, char *argv[])
 					&proj[3].rotation, &proj[3].zoom, &proj[3].strength_hor, &proj[3].strength_ver) == 7) {
 				param_cnt++;
 				continue;
+			} else if (strcmp (argv[i] + 1, "clb1") == 0 && ++i < argc &&
+				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[0].fx, &clb[0].fy, &clb[0].cx, &clb[0].cy,
+				&clb[0].k1, &clb[0].k2, &clb[0].k3, &clb[0].p1, &clb[0].p2) == 9) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "clb2") == 0 && ++i < argc &&
+				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[1].fx, &clb[1].fy, &clb[1].cx, &clb[1].cy,
+				&clb[1].k1, &clb[1].k2, &clb[1].k3, &clb[1].p1, &clb[1].p2) == 9) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "clb3") == 0 && ++i < argc &&
+				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[2].fx, &clb[2].fy, &clb[2].cx, &clb[2].cy,
+				&clb[2].k1, &clb[2].k2, &clb[2].k3, &clb[2].p1, &clb[2].p2) == 9) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "clb4") == 0 && ++i < argc &&
+				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[3].fx, &clb[3].fy, &clb[3].cx, &clb[3].cy,
+				&clb[3].k1, &clb[3].k2, &clb[3].k3, &clb[3].p1, &clb[3].p2) == 9) {
+				param_cnt++;
+				continue;
 			} else if (strcmp (argv[i] + 1, "win1") == 0 && ++i < argc &&
 				sscanf (argv[i], "%d_%d_%d_%d_%d_%d_%d_%d", &win[0].win_start_x, &win[0].win_end_x, &win[0].win_start_y, &win[0].win_end_y,
 					&win[0].img_start_x, &win[0].img_end_x, &win[0].img_start_y, &win[0].img_end_y) == 8) {
@@ -144,6 +170,10 @@ static int parse_command_line(int argc, char *argv[])
 			} else if (strcmp (argv[i] + 1, "win4") == 0 && ++i < argc &&
 				sscanf (argv[i], "%d_%d_%d_%d_%d_%d_%d_%d", &win[3].win_start_x, &win[3].win_end_x, &win[3].win_start_y, &win[3].win_end_y,
 					&win[3].img_start_x, &win[3].img_end_x, &win[3].img_start_y, &win[3].img_end_y) == 8) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "prm_mode") == 0 && ++i < argc &&
+				sscanf (argv[i], "%d", &dewarp_params.prm_mode) == 1) {
 				param_cnt++;
 				continue;
 			} else if (strcmp (argv[i] + 1, "tile_x_step") == 0 && ++i < argc &&
@@ -184,6 +214,7 @@ static int parse_command_line(int argc, char *argv[])
 	printf("   tile_x_step:%d tile_y_step:%d\n", dewarp_params.tile_x_step, dewarp_params.tile_y_step);
 	printf("   input_param: width(%5d) height(%5d) offset_x(%5d) offset_y(%5d) fov(%5d)\n", in->width, in->height, in->offset_x, in->offset_y, in->fov);
 	printf("     out_param: width(%5d) height(%5d)\n", out->width, out->height);
+
 	printf("    proj_param:");
 	for (i = 0; i < dewarp_params.win_num; i++) {
 		if (i != 0)
@@ -192,7 +223,17 @@ static int parse_command_line(int argc, char *argv[])
 			proj[i].projection_mode, proj[i].pan, proj[i].tilt,
 			proj[i].rotation, proj[i].zoom, proj[i].strength_hor, proj[i].strength_ver);
 	}
-	printf("   win_param:");
+
+	printf("     clb_param:");
+	for (i = 0; i < dewarp_params.win_num; i++) {
+		if (i != 0)
+			printf("              :");
+		printf("fx(%5lf) fy(%5lf) cx(%5lf) cy(%5lf) k1(%5lf) k2(%5lf) k3(%5lf) p1(%5lf) p2(%5lf)\n",
+			clb[i].fx, clb[i].fy, clb[i].cx, clb[i].cy, clb[i].k1, clb[i].k2, clb[i].k3,
+			clb[i].p1, clb[i].p2);
+	}
+
+	printf("     win_param:");
 	for (i = 0; i < dewarp_params.win_num; i++) {
 		if (i != 0)
 			printf("           :");
@@ -200,7 +241,7 @@ static int parse_command_line(int argc, char *argv[])
 			win[i].win_start_x, win[i].win_end_x, win[i].win_start_y, win[i].win_end_y,
 			win[i].img_start_x, win[i].img_end_x, win[i].img_start_y, win[i].img_end_y);
 	}
-	printf("in_file:%s out_file:%s\n", in_file, out_file);
+	printf("       in_file:%s out_file:%s\n", in_file, out_file);
 	printf("########################################\n");
 	printf("\n");
 	printf("\n");
