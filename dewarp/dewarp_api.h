@@ -60,6 +60,9 @@ struct clb_param {
     double k3;
     double p1;
     double p2;
+    double k4;
+    double k5;
+    double k6;
 };
 
 struct dewarp_params {

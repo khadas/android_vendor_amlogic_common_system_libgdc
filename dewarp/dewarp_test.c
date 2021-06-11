@@ -51,10 +51,10 @@ static void print_usage(void)
 	printf ("  -proj2 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
 	printf ("  -proj3 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
 	printf ("  -proj4 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
-	printf ("  -clb1 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2>                                              \n");
-	printf ("  -clb2 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2>                                              \n");
-	printf ("  -clb3 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2>                                              \n");
-	printf ("  -clb4 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2>                                              \n");
+	printf ("  -clb1 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
+	printf ("  -clb2 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
+	printf ("  -clb3 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
+	printf ("  -clb4 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
 	printf ("  -win1 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
 	printf ("  -win2 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
 	printf ("  -win3 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
@@ -133,23 +133,23 @@ static int parse_command_line(int argc, char *argv[])
 				param_cnt++;
 				continue;
 			} else if (strcmp (argv[i] + 1, "clb1") == 0 && ++i < argc &&
-				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[0].fx, &clb[0].fy, &clb[0].cx, &clb[0].cy,
-				&clb[0].k1, &clb[0].k2, &clb[0].k3, &clb[0].p1, &clb[0].p2) == 9) {
+				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[0].fx, &clb[0].fy, &clb[0].cx, &clb[0].cy,
+				&clb[0].k1, &clb[0].k2, &clb[0].k3, &clb[0].p1, &clb[0].p2, &clb[0].k4, &clb[0].k5, &clb[0].k6) == 12) {
 				param_cnt++;
 				continue;
 			} else if (strcmp (argv[i] + 1, "clb2") == 0 && ++i < argc &&
-				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[1].fx, &clb[1].fy, &clb[1].cx, &clb[1].cy,
-				&clb[1].k1, &clb[1].k2, &clb[1].k3, &clb[1].p1, &clb[1].p2) == 9) {
+				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[1].fx, &clb[1].fy, &clb[1].cx, &clb[1].cy,
+				&clb[1].k1, &clb[1].k2, &clb[1].k3, &clb[1].p1, &clb[1].p2, &clb[1].k4, &clb[1].k5, &clb[1].k6) == 12) {
 				param_cnt++;
 				continue;
 			} else if (strcmp (argv[i] + 1, "clb3") == 0 && ++i < argc &&
-				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[2].fx, &clb[2].fy, &clb[2].cx, &clb[2].cy,
-				&clb[2].k1, &clb[2].k2, &clb[2].k3, &clb[2].p1, &clb[2].p2) == 9) {
+				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[2].fx, &clb[2].fy, &clb[2].cx, &clb[2].cy,
+				&clb[2].k1, &clb[2].k2, &clb[2].k3, &clb[2].p1, &clb[2].p2, &clb[2].k4, &clb[2].k5, &clb[2].k6) == 12) {
 				param_cnt++;
 				continue;
 			} else if (strcmp (argv[i] + 1, "clb4") == 0 && ++i < argc &&
-				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[3].fx, &clb[3].fy, &clb[3].cx, &clb[3].cy,
-				&clb[3].k1, &clb[3].k2, &clb[3].k3, &clb[3].p1, &clb[3].p2) == 9) {
+				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[3].fx, &clb[3].fy, &clb[3].cx, &clb[3].cy,
+				&clb[3].k1, &clb[3].k2, &clb[3].k3, &clb[3].p1, &clb[3].p2, &clb[3].k4, &clb[3].k5, &clb[3].k6) == 12) {
 				param_cnt++;
 				continue;
 			} else if (strcmp (argv[i] + 1, "win1") == 0 && ++i < argc &&
@@ -228,9 +228,9 @@ static int parse_command_line(int argc, char *argv[])
 	for (i = 0; i < dewarp_params.win_num; i++) {
 		if (i != 0)
 			printf("              :");
-		printf("fx(%5lf) fy(%5lf) cx(%5lf) cy(%5lf) k1(%5lf) k2(%5lf) k3(%5lf) p1(%5lf) p2(%5lf)\n",
+		printf("fx(%5lf) fy(%5lf) cx(%5lf) cy(%5lf) k1(%5lf) k2(%5lf) k3(%5lf) p1(%5lf) p2(%5lf) k4(%5lf) k5(%5lf) k6(%5lf)\n",
 			clb[i].fx, clb[i].fy, clb[i].cx, clb[i].cy, clb[i].k1, clb[i].k2, clb[i].k3,
-			clb[i].p1, clb[i].p2);
+			clb[i].p1, clb[i].p2, clb[i].k4, clb[i].k5, clb[i].k6);
 	}
 
 	printf("     win_param:");
