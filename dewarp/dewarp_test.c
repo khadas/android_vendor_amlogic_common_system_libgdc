@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -24,6 +25,9 @@ static int process_circle = 1;
 char in_file[256];
 char out_file[256];
 char dump_fw_file[256];
+
+char meshin_file[WIN_MAX][256];
+float *meshin_data_table[WIN_MAX];
 
 static inline unsigned long myclock()
 {
@@ -55,11 +59,19 @@ static void print_usage(void)
 	printf ("  -clb2 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
 	printf ("  -clb3 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
 	printf ("  -clb4 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
+	printf ("  -meshin1 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                  \n");
+	printf ("  -meshin2 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                  \n");
+	printf ("  -meshin3 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                  \n");
+	printf ("  -meshin4 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                  \n");
+	printf ("  -meshin1_file <MeshinDataFileName>                                              \n");
+	printf ("  -meshin2_file <MeshinDataFileName>                                              \n");
+	printf ("  -meshin3_file <MeshinDataFileName>                                              \n");
+	printf ("  -meshin3_file <MeshinDataFileName>                                              \n");
 	printf ("  -win1 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
 	printf ("  -win2 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
 	printf ("  -win3 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
 	printf ("  -win4 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
-	printf ("  -prm_mode <0:use proj_param, 1:use clb_param>                                   \n");
+	printf ("  -prm_mode <0:use proj_param, 1:use clb_param 2:use meshin>                      \n");
 	printf ("  -circle <Num>                                                                   \n");
 	printf ("  -in_file  <ImageName>                                                           \n");
 	printf ("  -out_file <ImageName>                                                           \n");
@@ -70,11 +82,12 @@ static void print_usage(void)
 static int parse_command_line(int argc, char *argv[])
 {
 	int i, param_cnt = 0;
-	struct input_param *in   = &dewarp_params.input_param;
-	struct output_param *out = &dewarp_params.output_param;
-	struct proj_param *proj  = &dewarp_params.proj_param[0];
-	struct win_param *win    = &dewarp_params.win_param[0];
-	struct clb_param *clb    = &dewarp_params.clb_param[0];
+	struct input_param *in      = &dewarp_params.input_param;
+	struct output_param *out    = &dewarp_params.output_param;
+	struct proj_param *proj     = &dewarp_params.proj_param[0];
+	struct win_param *win       = &dewarp_params.win_param[0];
+	struct clb_param *clb       = &dewarp_params.clb_param[0];
+	struct meshin_param *meshin = &dewarp_params.meshin_param[0];
 
 	dewarp_params.tile_x_step = 8; /* default x step */
 	dewarp_params.tile_y_step = 8; /* default y step */
@@ -150,6 +163,42 @@ static int parse_command_line(int argc, char *argv[])
 			} else if (strcmp (argv[i] + 1, "clb4") == 0 && ++i < argc &&
 				sscanf (argv[i], "%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf_%lf", &clb[3].fx, &clb[3].fy, &clb[3].cx, &clb[3].cy,
 				&clb[3].k1, &clb[3].k2, &clb[3].k3, &clb[3].p1, &clb[3].p2, &clb[3].k4, &clb[3].k5, &clb[3].k6) == 12) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "meshin1") == 0 && ++i < argc &&
+				sscanf (argv[i], "%d_%d_%d_%d_%d_%d", &meshin[0].x_start, &meshin[0].y_start, &meshin[0].x_len, &meshin[0].y_len,
+					&meshin[0].x_step, &meshin[0].y_step) == 6) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "meshin2") == 0 && ++i < argc &&
+				sscanf (argv[i], "%d_%d_%d_%d_%d_%d", &meshin[1].x_start, &meshin[1].y_start, &meshin[1].x_len, &meshin[1].y_len,
+					&meshin[1].x_step, &meshin[1].y_step) == 6) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "meshin3") == 0 && ++i < argc &&
+				sscanf (argv[i], "%d_%d_%d_%d_%d_%d", &meshin[2].x_start, &meshin[2].y_start, &meshin[2].x_len, &meshin[2].y_len,
+					&meshin[2].x_step, &meshin[2].y_step) == 6) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "meshin4") == 0 && ++i < argc &&
+				sscanf (argv[i], "%d_%d_%d_%d_%d_%d", &meshin[3].x_start, &meshin[3].y_start, &meshin[3].x_len, &meshin[3].y_len,
+					&meshin[3].x_step, &meshin[3].y_step) == 6) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "meshin1_file") == 0 && ++i < argc &&
+				sscanf (argv[i], "%s", meshin_file[0]) == 1) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "meshin2_file") == 0 && ++i < argc &&
+				sscanf (argv[i], "%s", meshin_file[1]) == 1) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "meshin3_file") == 0 && ++i < argc &&
+				sscanf (argv[i], "%s", meshin_file[2]) == 1) {
+				param_cnt++;
+				continue;
+			} else if (strcmp (argv[i] + 1, "meshin4_file") == 0 && ++i < argc &&
+				sscanf (argv[i], "%s", meshin_file[3]) == 1) {
 				param_cnt++;
 				continue;
 			} else if (strcmp (argv[i] + 1, "win1") == 0 && ++i < argc &&
@@ -233,6 +282,15 @@ static int parse_command_line(int argc, char *argv[])
 			clb[i].p1, clb[i].p2, clb[i].k4, clb[i].k5, clb[i].k6);
 	}
 
+	printf("     meshin_param:");
+	for (i = 0; i < dewarp_params.win_num; i++) {
+		if (i != 0)
+			printf("              :");
+		printf("xstart(%5d) ystart(%5d) xlen(%5d) ylen(%5d) xstep(%5d) ystep(%5d) meshin_data_file(%s)\n",
+			meshin[i].x_start, meshin[i].y_start, meshin[i].x_len, meshin[i].y_len,
+			meshin[i].x_step, meshin[i].y_step, meshin_file[i]);
+	}
+
 	printf("     win_param:");
 	for (i = 0; i < dewarp_params.win_num; i++) {
 		if (i != 0)
@@ -257,7 +315,7 @@ static int dewarp_to_libgdc_format(int dewarp_format);
 
 int main(int argc, char** argv)
 {
-	int i;
+	int i, j;
 	unsigned long stime;
 	struct input_param *in   = &dewarp_params.input_param;
 	struct output_param *out = &dewarp_params.output_param;
@@ -287,6 +345,37 @@ int main(int argc, char** argv)
 	ret = parse_command_line(argc, argv);
 	if (ret < 0)
 		return -1;
+
+	/* for meshin_mode, give meshin_data_table to dewarp_params */
+	if(dewarp_params.prm_mode == 2) {
+		float tmp;
+
+		for (i = 0; i < dewarp_params.win_num; i++) {
+			FILE *fp_meshin_file = NULL;
+			int data_num = dewarp_params.meshin_param[i].x_len *
+					    dewarp_params.meshin_param[i].y_len * 2;
+
+			/* read mesh data from txt, just for test*/
+			fp_meshin_file = fopen(meshin_file[i],"r");
+			if(fp_meshin_file == NULL) {
+				printf("mesh table input file(%s) open failed!\n",
+					  meshin_file[i]);
+				return -1;
+			}
+
+			meshin_data_table[i] = (float *)calloc(data_num, sizeof(float));
+			for(j = 0; j < data_num; j++) {
+				if (fscanf(fp_meshin_file, "%f", &tmp) < 0)
+					printf("read mesh error, j:%x\n", j);
+				meshin_data_table[i][j]= tmp;
+			}
+			fclose(fp_meshin_file);
+
+			/* give it to dewarp_params */
+			dewarp_params.meshin_param[i].meshin_data_table = meshin_data_table[i];
+		}
+	}
+
 
 	ctx.custom_fw = 0;                 /* not use builtin fw */
 	ctx.mem_type = AML_GDC_MEM_ION;    /* use ION memory to test */
@@ -335,7 +424,7 @@ int main(int argc, char** argv)
 
 	ret = gdc_create_ctx(&ctx);
 	if (ret < 0)
-		return ret;
+		goto release_meshin_buf;
 
 	if (format == NV12 || format == YV12)
 		i_len = i_y_stride * i_height * 3 / 2;
@@ -424,6 +513,11 @@ release_fw_buf:
 	ion_release_mem(firmware_shared_fd);
 destroy_ctx:
 	gdc_destroy_ctx(&ctx);
+release_meshin_buf:
+	if(dewarp_params.prm_mode == 2) {
+		for (i = 0; i < dewarp_params.win_num; i++)
+		free(meshin_data_table[i]);
+	}
 
 	return ret;
 }

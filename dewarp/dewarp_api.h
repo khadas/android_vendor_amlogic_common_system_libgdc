@@ -65,6 +65,16 @@ struct clb_param {
     double k6;
 };
 
+struct meshin_param {
+    int x_start;
+    int y_start;
+    int x_len;
+    int y_len;
+    int x_step;
+    int y_step;
+    float *meshin_data_table;
+};
+
 struct dewarp_params {
     int win_num;
     struct input_param input_param;
@@ -72,8 +82,9 @@ struct dewarp_params {
     struct output_param output_param;
     struct proj_param proj_param[WIN_MAX];
     struct clb_param clb_param[WIN_MAX];
+    struct meshin_param meshin_param[WIN_MAX];
     struct win_param win_param[WIN_MAX];
-    int prm_mode; /* 0. use proj_param, 1.use clb_param. */
+    int prm_mode; /* 0. use proj_param, 1.use clb_param, 2. meshin mode*/
     int tile_x_step;
     int tile_y_step;
 };
