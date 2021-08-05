@@ -42,40 +42,41 @@ static void print_usage(void)
 {
 	printf ("Usage: dewarp_test [options]\n\n");
 	printf ("Options:\n\n");
-	printf ("  -help                                                                           \n");
-	printf ("  -win_num <Num>                                                                  \n");
-	printf ("  -tile_x_step <Num>                                                              \n");
-	printf ("  -tile_y_step <Num>                                                              \n");
-	printf ("  -input_size <WxH>                                                               \n");
-	printf ("  -input_offset <X_Y>                                                             \n");
-	printf ("  -fov <Num>                                                                      \n");
-	printf ("  -color_mode <0:YUV420_PLANAR 1:YUV420_SEMIPLANAR 2:YONLY>                       \n");
-	printf ("  -output_size <WxH>                                                              \n");
-	printf ("  -proj1 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
-	printf ("  -proj2 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
-	printf ("  -proj3 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
-	printf ("  -proj4 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                    \n");
-	printf ("  -clb1 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
-	printf ("  -clb2 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
-	printf ("  -clb3 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
-	printf ("  -clb4 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                     \n");
-	printf ("  -meshin1 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                  \n");
-	printf ("  -meshin2 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                  \n");
-	printf ("  -meshin3 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                  \n");
-	printf ("  -meshin4 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                  \n");
-	printf ("  -meshin1_file <MeshinDataFileName>                                              \n");
-	printf ("  -meshin2_file <MeshinDataFileName>                                              \n");
-	printf ("  -meshin3_file <MeshinDataFileName>                                              \n");
-	printf ("  -meshin3_file <MeshinDataFileName>                                              \n");
-	printf ("  -win1 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
-	printf ("  -win2 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
-	printf ("  -win3 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
-	printf ("  -win4 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY> \n");
-	printf ("  -prm_mode <0:use proj_param, 1:use clb_param 2:use meshin>                      \n");
-	printf ("  -circle <Num>                                                                   \n");
-	printf ("  -in_file  <ImageName>                                                           \n");
-	printf ("  -out_file <ImageName>                                                           \n");
-	printf ("  -dump_fw_file <FirmwareName>                                                    \n");
+	printf ("  -help                                                                                                                                                   \n");
+	printf ("  -win_num <Num>                                                                                                                                          \n");
+	printf ("  -tile_x_step <Num>                                                                                                                                      \n");
+	printf ("  -tile_y_step <Num>                                                                                                                                      \n");
+	printf ("  -input_size <WxH>                                                                                                                                       \n");
+	printf ("  -input_offset <X_Y>                                                                                                                                     \n");
+	printf ("  -fov <Num>                                                                                                                                              \n");
+	printf ("  -color_mode <0:YUV420_PLANAR 1:YUV420_SEMIPLANAR 2:YONLY>                                                                                               \n");
+	printf ("  -output_size <WxH>                                                                                                                                      \n");
+	printf ("  -proj1 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                                                                                            \n");
+	printf ("  -proj2 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                                                                                            \n");
+	printf ("  -proj3 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                                                                                            \n");
+	printf ("  -proj4 <ProjMode_Pan_Tilt_Rotation_Zoom_StrengthH_StrengthV>                                                                                            \n");
+	printf ("  -clb1 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                                                                                             \n");
+	printf ("  -clb2 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                                                                                             \n");
+	printf ("  -clb3 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                                                                                             \n");
+	printf ("  -clb4 <Fx_Fy_Cx_Cy_K1_K2_K3_P1_P2_K4_K5_K6>                                                                                                             \n");
+	printf ("  -meshin1 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                                                                                          \n");
+	printf ("  -meshin2 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                                                                                          \n");
+	printf ("  -meshin3 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                                                                                          \n");
+	printf ("  -meshin4 <Xstart_Ystart_Xlen_Ylen_Xstep_Ystep>                                                                                                          \n");
+	printf ("  -meshin1_file <MeshinDataFileName>                                                                                                                      \n");
+	printf ("  -meshin2_file <MeshinDataFileName>                                                                                                                      \n");
+	printf ("  -meshin3_file <MeshinDataFileName>                                                                                                                      \n");
+	printf ("  -meshin4_file <MeshinDataFileName>                                                                                                                      \n");
+	printf ("  -dptz_param SrcU_SrcV_OutWW_OutHH_SrbUW_SrbVW_SrbWW_SrbHH_ScWW_ScHH_ZoomP_ZoomQ_PixelAspectRatioX_PixelAspectRatioY_Fx_Fy_UC_VC_K1_K2_K3_K4_K5_K6_P1_P2 \n");
+	printf ("  -win1 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY>                                                                         \n");
+	printf ("  -win2 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY>                                                                         \n");
+	printf ("  -win3 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY>                                                                         \n");
+	printf ("  -win4 <WinStartX_WinEndX_WinStartY_WinEndY_ImgStartX_ImgEndX_ImgStartY_ImgEndY>                                                                         \n");
+	printf ("  -prm_mode <0:use proj_param, 1:use clb_param 2:use meshin 3:use dptz_param>                                                                             \n");
+	printf ("  -circle <Num>                                                                                                                                           \n");
+	printf ("  -in_file  <ImageName>                                                                                                                                   \n");
+	printf ("  -out_file <ImageName>                                                                                                                                   \n");
+	printf ("  -dump_fw_file <FirmwareName>                                                                                                                            \n");
 	printf ("\n");
 }
 
@@ -88,6 +89,7 @@ static int parse_command_line(int argc, char *argv[])
 	struct win_param *win       = &dewarp_params.win_param[0];
 	struct clb_param *clb       = &dewarp_params.clb_param[0];
 	struct meshin_param *meshin = &dewarp_params.meshin_param[0];
+	struct dptz_param * dptz_param = &dewarp_params.dptz_param;
 
 	dewarp_params.tile_x_step = 8; /* default x step */
 	dewarp_params.tile_y_step = 8; /* default y step */
@@ -201,6 +203,17 @@ static int parse_command_line(int argc, char *argv[])
 				sscanf (argv[i], "%s", meshin_file[3]) == 1) {
 				param_cnt++;
 				continue;
+			} else if (strcmp (argv[i] + 1, "dptz_param") == 0 && ++i < argc &&
+				sscanf (argv[i], "%d_%d_%d_%d_%d_%d_%d_%d_%d_%d_%f_%f_%f_%f_%f_%f_%f_%f_%f_%f_%f_%f_%f_%f_%f_%f",
+					&dptz_param->src_u,  &dptz_param->src_v, &dptz_param->out_ww, &dptz_param->out_hh,
+					&dptz_param->srB_uW, &dptz_param->srB_vW,&dptz_param->srB_ww, &dptz_param->srB_hh,
+					&dptz_param->sc_ww,  &dptz_param->sc_hh, &dptz_param->zoom_p, &dptz_param->zoom_q,
+					&dptz_param->pixel_aspect_ratio_x, &dptz_param->pixel_aspect_ratio_y,
+					&dptz_param->fx,&dptz_param->fy, &dptz_param->uC,&dptz_param->vC,
+					&dptz_param->k1,&dptz_param->k2,&dptz_param->k3,&dptz_param->k4,
+					&dptz_param->k5,&dptz_param->k6,&dptz_param->p1,&dptz_param->p2) == 26) {
+				param_cnt++;
+				continue;
 			} else if (strcmp (argv[i] + 1, "win1") == 0 && ++i < argc &&
 				sscanf (argv[i], "%d_%d_%d_%d_%d_%d_%d_%d", &win[0].win_start_x, &win[0].win_end_x, &win[0].win_start_y, &win[0].win_end_y,
 					&win[0].img_start_x, &win[0].img_end_x, &win[0].img_start_y, &win[0].img_end_y) == 8) {
@@ -290,6 +303,21 @@ static int parse_command_line(int argc, char *argv[])
 			meshin[i].x_start, meshin[i].y_start, meshin[i].x_len, meshin[i].y_len,
 			meshin[i].x_step, meshin[i].y_step, meshin_file[i]);
 	}
+
+	printf("       dptz_param:");
+	printf("src_u(%5d)_src_v(%5d)_out_ww(%5d)_out_hh(%5d)_srB_uW(%5d)_srB_vW(%5d)_srB_ww(%5d)_srB_hh(%5d)_sc_ww(%5d)_sc_hh(%5d)\n",
+		dptz_param->src_u,  dptz_param->src_v, dptz_param->out_ww, dptz_param->out_hh,
+		dptz_param->srB_uW, dptz_param->srB_vW,dptz_param->srB_ww, dptz_param->srB_hh,
+		dptz_param->sc_ww,  dptz_param->sc_hh);
+	printf("                 :");
+	printf("zoom_p(%5f)_zoom_q(%5f)_pixel_aspect_ratio_x(%5f)_pixel_aspect_ratio_y(%5f)\n",
+		dptz_param->zoom_p, dptz_param->zoom_q,
+		dptz_param->pixel_aspect_ratio_x, dptz_param->pixel_aspect_ratio_y);
+	printf("                 :");
+	printf("fx(%5f)_fy(%5f)_uC(%5f)_vC(%5f)_k1(%5f)_k2(%5f)_k3(%5f)_k4(%5f)_k5(%5f)_k6(%5f)_p1(%5f)_p2(%5f)\n",
+		dptz_param->fx,dptz_param->fy, dptz_param->uC,dptz_param->vC,
+		dptz_param->k1,dptz_param->k2,dptz_param->k3,dptz_param->k4,
+		dptz_param->k5,dptz_param->k6,dptz_param->p1,dptz_param->p2);
 
 	printf("     win_param:");
 	for (i = 0; i < dewarp_params.win_num; i++) {

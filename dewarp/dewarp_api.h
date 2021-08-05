@@ -75,6 +75,21 @@ struct meshin_param {
     float *meshin_data_table;
 };
 
+struct dptz_param {
+    int   src_u,  src_v;                    /* Dewarped. Includes zoom factor */
+    int   out_ww, out_hh;                   /* Dewarped. Includes zoom factor */
+    int   srB_uW, srB_vW;                   /* Warped. Includes borders */
+    int   srB_ww, srB_hh;                   /* Warped. Includes borders. pre-zoom */
+    int   sc_ww,  sc_hh;                    /* Warped. Includes borders. post-zoom (actual outputimage buffer) */
+    float zoom_p, zoom_q;                   /* zoom factor.  src_width/out_width  src_height/out_height */
+    float pixel_aspect_ratio_x, pixel_aspect_ratio_y;
+
+    /* these are static calibration parameters: */
+    float fx,fy;                            /* sensor GDC parameters (intrinsic focal length in pixels) */
+    float uC,vC;                            /* sensor GDC parameters (intrinsic image center in pixels) */
+    float k1,k2,k3,k4,k5,k6,p1,p2;          /* sensor GDC parameters; */
+};
+
 struct dewarp_params {
     int win_num;
     struct input_param input_param;
@@ -83,8 +98,9 @@ struct dewarp_params {
     struct proj_param proj_param[WIN_MAX];
     struct clb_param clb_param[WIN_MAX];
     struct meshin_param meshin_param[WIN_MAX];
+    struct dptz_param dptz_param;
     struct win_param win_param[WIN_MAX];
-    int prm_mode; /* 0. use proj_param, 1.use clb_param, 2. meshin mode*/
+    int prm_mode; /* 0. use proj_param, 1.use clb_param, 2. meshin mode 3. use dptz_param */
     int tile_x_step;
     int tile_y_step;
 };
