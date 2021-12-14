@@ -58,7 +58,8 @@ enum {
 
 enum {
 	ARM_GDC,
-	AML_GDC
+	AML_GDC,
+	AML_GDC_V2
 };
 
 typedef unsigned int uint32_t;

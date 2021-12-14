@@ -33,28 +33,108 @@
 #include "gdc_api.h"
 #define TEST_NUM 3
 
-int compare_data(char *data1, char *data2, int size)
+static int compare_data(void *std, char *data)
 {
-	int i = 0, err_hit = 0;
+	int i = 0, j = 0, offset = 0, err_hit = 0;
 	int thresh_hold = 1;
+	int ret = -1;
+	patern_output_image_t *golden = NULL;
+	char *golden_y_line;
+	char *golden_uv_line;
+	int line_stride;
 
-	if (!data1 || !data2 || !size) {
+	if (!data || !std) {
 		E_GDC("cmp data, para err\n");
 		return -1;
 	}
-	for (i = 0; i < size; i++) {
-		if (*data1 != *data2) {
-			E_GDC("data1=%x,data2=%x\n",*data1,*data2);
-			err_hit++;
-		}
-		data1++;
-		data2++;
-		if (err_hit > thresh_hold) {
-			E_GDC("bad chip found,err_hit=%d\n",err_hit);
-			return -1;
+
+	golden = (patern_output_image_t *)std;
+	line_stride = golden->image_w;
+
+	/* set a y line */
+	golden_y_line = (char *)malloc(line_stride);
+	if (!golden_y_line) {
+		E_GDC("%s, malloc y failed\n", __func__);
+		return -1;
+	}
+
+#ifdef DUMP_OUTPUT
+	printf("=== y ===\n");
+#endif
+	for (i = 0; i < golden->y_array_cnt; i++) {
+		for (j = 0; j < golden->y[i].len_pixel; j++) {
+			golden_y_line[offset] = golden->y[i].color_y;
+			#ifdef DUMP_OUTPUT
+			printf("0x%x ", golden_y_line[offset]);
+			#endif
+			offset++;
 		}
 	}
-	return 0;
+
+	/* set a uv line */
+	golden_uv_line = (char *)malloc(line_stride);
+	if (!golden_uv_line) {
+		E_GDC("%s, malloc uv failed\n", __func__);
+		ret = -1;
+		goto free_y;
+	}
+
+#ifdef DUMP_OUTPUT
+	printf("\n=== uv ===\n");
+#endif
+	offset = 0;
+	for (i = 0; i < golden->uv_array_cnt; i++) {
+		for (j = 0; j < golden->uv[i].len_pixel; j++) {
+			golden_uv_line[offset] = golden->uv[i].color_u;
+			golden_uv_line[offset + 1] = golden->uv[i].color_v;
+			#ifdef DUMP_OUTPUT
+			printf("0x%x 0x%x ", golden_uv_line[offset], golden_uv_line[offset + 1]);
+			#endif
+			offset += 2;
+		}
+	}
+
+	/* compare y */
+	offset = 0;
+	for (i = 0; i < golden->image_h; i++) {
+		ret = memcmp(data + offset, golden_y_line, line_stride);
+		if (ret) {
+			E_GDC("err_hit y one\n");
+			err_hit++;
+		}
+		if (err_hit > thresh_hold) {
+			E_GDC("bad chip found,err_hit=%d\n",err_hit);
+			ret = -1;
+			goto free;
+		}
+		offset += line_stride;
+	}
+
+	/* compare uv */
+	for (i = 0; i < golden->image_h / 2; i++) {
+		ret = memcmp(data + offset, golden_uv_line, line_stride);
+		if (ret) {
+			E_GDC("err_hit uv one\n");
+			err_hit++;
+		}
+		if (err_hit > thresh_hold) {
+			E_GDC("bad chip found,err_hit=%d\n",err_hit);
+			ret = -1;
+			goto free;
+		}
+		offset += line_stride;
+	}
+
+#ifdef DUMP_OUTPUT
+	printf("final offset:%d\n", offset);
+#endif
+
+free:
+	free(golden_uv_line);
+free_y:
+	free(golden_y_line);
+
+	return ret;
 }
 
 static int slt_gdc_set_config_param(struct gdc_usr_ctx_s *ctx,
@@ -70,60 +150,27 @@ static int slt_gdc_set_config_param(struct gdc_usr_ctx_s *ctx,
 	return 0;
 }
 
-static int gdc_set_input_image(struct gdc_usr_ctx_s *ctx,
-				   char *input)
-{
-	int i;
-
-	if (input == NULL || ctx == NULL) {
-		E_GDC("Error input param\n");
-		return -1;
-	}
-
-	for (i = 0; i < ctx->plane_number; i++) {
-		if (ctx->i_buff[i] == NULL || ctx->i_len[i] == 0) {
-			D_GDC("Error input param, plane_id=%d\n", i);
-			return -1;
-		}
-		memcpy(ctx->i_buff[i], input, ctx->i_len[i]);
-		input += ctx->i_len[i];
-	}
-
-	return 0;
-}
-
 #ifdef DUMP_OUTPUT
-static void save_imgae(struct gdc_usr_ctx_s *ctx, char *file_name)
+static void save_imgae(char *data, int byte_size, char *file_name)
 {
 	FILE *fp = NULL;
 	int i;
 
-	if (ctx == NULL || file_name == NULL) {
+	if (!data || !byte_size || !file_name) {
 		E_GDC("%s:wrong paras\n", __func__);
 		return;
 	}
+
 	fp = fopen(file_name, "wb");
 	if (fp == NULL) {
 		E_GDC("%s:Error open file\n", __func__);
 		return;
 	}
-	for (i = 0; i < ctx->plane_number; i++) {
-		if (ctx->o_buff[i] == NULL || ctx->o_len[i] == 0) {
-			E_GDC("%s:Error input param\n", __func__);
-			break;
-		}
-		D_GDC("gdc: 0x%2x, 0x%2x,0x%2x,0x%2x, 0x%2x,0x%2x,0x%2x,0x%2x\n",
-			ctx->o_buff[i][0],
-			ctx->o_buff[i][1],
-			ctx->o_buff[i][2],
-			ctx->o_buff[i][3],
-			ctx->o_buff[i][4],
-			ctx->o_buff[i][5],
-			ctx->o_buff[i][6],
-			ctx->o_buff[i][7]);
+	D_GDC("gdc: 0x%2x, 0x%2x,0x%2x,0x%2x, 0x%2x,0x%2x,0x%2x,0x%2x\n",
+		data[0], data[1], data[2], data[3],
+		data[4], data[5], data[6], data[7]);
 
-		fwrite(ctx->o_buff[i], ctx->o_len[i], 1, fp);
-	}
+	fwrite(data, byte_size, 1, fp);
 	fclose(fp);
 }
 #endif
@@ -198,7 +245,10 @@ static int slt_gdc_init_cfg(struct gdc_usr_ctx_s *ctx, struct gdc_param *tparm,
 		return -1;
 
 	if (!ctx->custom_fw) {
-		c_len = sizeof(config_data);
+		if (ctx->dev_type == AML_GDC)
+			c_len = sizeof(config_data_aml);
+		else
+			c_len = sizeof(config_data);
 		if (c_len <= 0) {
 			gdc_destroy_ctx(ctx);
 			E_GDC("Error gdc config file size\n");
@@ -294,7 +344,44 @@ static int slt_gdc_init_cfg(struct gdc_usr_ctx_s *ctx, struct gdc_param *tparm,
 	return ret;
 }
 
-int main() {
+static int pattern_set_input_image(struct gdc_usr_ctx_s *ctx,
+				   patern_input_image_t *input_image)
+{
+	int i, j, k, offset = 0;
+
+	if (input_image == NULL || ctx == NULL) {
+		E_GDC("Error input param\n");
+		return -1;
+	}
+
+	if (ctx->i_buff[0] == NULL || ctx->i_len[0] == 0) {
+		D_GDC("Error input param\n");
+		return -1;
+	}
+	/* y */
+	for (i = 0; i < input_image->image_h; i++) {
+		for (j = 0; j < (int)(sizeof(input_image->y) / sizeof(input_image->y[0])); j++)
+			for (k = 0; k < input_image->y[j].len_pixel; k++) {
+				ctx->i_buff[0][offset] = input_image->y[j].color_y;
+				offset++;
+			}
+	}
+
+	/* uv */
+	for (i = 0; i < input_image->image_h / 2; i++) {
+		for (j = 0; j < (int)(sizeof(input_image->uv) / sizeof(input_image->uv[0])); j++)
+			for (k = 0; k < input_image->uv[j].len_pixel; k++) {
+				ctx->i_buff[0][offset] = input_image->uv[j].color_u;
+				ctx->i_buff[0][offset + 1] = input_image->uv[j].color_v;
+				offset += 2;
+			}
+	}
+
+	return 0;
+}
+
+int main(int argc, char* argv[])
+{
 	int ret = 0;
 	struct gdc_usr_ctx_s ctx;
 	uint32_t format;
@@ -303,12 +390,21 @@ int main() {
 	uint32_t out_width;
 	uint32_t out_height;
 	int plane_number, mem_type;
-	char *output_cmp = (char *)output_golden;
+	void *golden = NULL;
 	struct gdc_param g_param;
 	int i = 0, test_cnt = 0, err_cnt = 0;
 	int is_custom_fw;
+	/* 0: default value, means gdc
+	 * 1: means v1 dewarp (t7 chip)
+	 * 2: means v2 dewarp (p1 and later chips)
+	 */
+	int dev_type = ARM_GDC;
+	char *config = NULL;
 
 	/* set params */
+	if (argc > 1)
+		dev_type = atoi(argv[1]);
+
 	is_custom_fw = 0;
 	format = 1;
 	plane_number = 1;
@@ -329,8 +425,20 @@ int main() {
 	ctx.custom_fw = is_custom_fw;
 	ctx.mem_type = mem_type;
 	ctx.plane_number = plane_number;
+	ctx.dev_type = dev_type > 0 ? AML_GDC : ARM_GDC;
 
-	ret = slt_gdc_init_cfg(&ctx, &g_param, (char *)config_data);
+	if (dev_type == AML_GDC_V2) {
+		config = (char *)config_data_aml;
+		golden = &output_golden_aml_v2;
+	} else if (dev_type == AML_GDC) {
+		config = (char *)config_data_aml;
+		golden = &output_golden_aml;
+	} else {
+		config = (char *)config_data;
+		golden = &output_golden;
+	}
+
+	ret = slt_gdc_init_cfg(&ctx, &g_param, config);
 	if (ret < 0) {
 		E_GDC("Error gdc init\n");
 		gdc_destroy_ctx(&ctx);
@@ -339,7 +447,12 @@ int main() {
 
 	printf("Start GDC chip check...\n");
 	for (test_cnt = 0; test_cnt < TEST_NUM; test_cnt++) {
-		gdc_set_input_image(&ctx, (char *)input_image);
+		pattern_set_input_image(&ctx, &input_image);
+
+		#ifdef DUMP_OUTPUT
+		save_imgae(ctx.i_buff[0], ctx.i_len[0], "save_input_file.raw");
+		printf("Success save input image\n");
+		#endif
 		ret = gdc_process(&ctx);
 		if (ret < 0) {
 			E_GDC("ioctl failed\n");
@@ -349,8 +462,7 @@ int main() {
 
 		ion_mem_invalid_cache(ctx.ion_fd,
 			ctx.gs_ex.output_buffer.shared_fd);
-		ret = compare_data(output_cmp, ctx.o_buff[i],
-				ctx.o_len[i]);
+		ret = compare_data(golden, ctx.o_buff[i]);
 		if (ret < 0)
 			err_cnt++;
 	}
@@ -359,13 +471,11 @@ int main() {
 	else
 		printf("===gdc_slt_test:pass===\n");
 
-#ifdef DUMP_OUTPUT
-	{
-		char *output_file = "save_output_file.raw";
-		save_imgae(&ctx, output_file);
-		D_GDC("Success save output image\n");
-	}
-#endif
+	#ifdef DUMP_OUTPUT
+	save_imgae(ctx.o_buff[0], ctx.o_len[0], "save_output_file.raw");
+	printf("Success save output image\n");
+	#endif
+
 	gdc_destroy_ctx(&ctx);
 
 	return 0;
