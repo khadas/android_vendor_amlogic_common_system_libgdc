@@ -11,6 +11,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/include \
 	system/core/libion/include/ \
 	system/core/libion/kernel-headers \
 	system/core/liblog/include \
+	system/memory/libion/kernel-headers/linux/
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_CFLAGS := -Werror
 
@@ -47,6 +48,7 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 LOCAL_MODULE := libdewarp
 LOCAL_MODULE_TAGS := optional
+LOCAL_SHARED_LIBRARIES := libc++ libc libcutils libdl liblog libm
 LOCAL_SRC_FILES := dewarp/libdewarp.so
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/dewarp
 LOCAL_MODULE_SUFFIX := $(suffix $(LOCAL_SRC_FILES))
