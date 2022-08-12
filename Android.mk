@@ -49,11 +49,14 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libdewarp
 LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := libc++ libc libcutils libdl liblog libm
-LOCAL_SRC_FILES := dewarp/libdewarp.so
+LOCAL_MULTILIB := both
+LOCAL_SRC_FILES_32 := dewarp/lib/32/libdewarp.so
+LOCAL_SRC_FILES_64 := dewarp/lib/64/libdewarp.so
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/dewarp
-LOCAL_MODULE_SUFFIX := $(suffix $(LOCAL_SRC_FILES))
+LOCAL_MODULE_SUFFIX := .so
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-LOCAL_MODULE_PATH := $(PRODUCT_OUT)/vendor/lib
+LOCAL_MODULE_PATH_32 := $(PRODUCT_OUT)/vendor/lib
+LOCAL_MODULE_PATH_64 := $(PRODUCT_OUT)/vendor/lib64
 include $(BUILD_PREBUILT)
 
 # dewarp_test
